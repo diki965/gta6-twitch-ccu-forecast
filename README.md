@@ -1,4 +1,16 @@
-# GTA VI Twitch CCU forecaster — `gta6-twitch-ccu-forecast-01`
+# gta6-twitch-ccu-forecast
+
+[![make.fun · gta6-twitch-ccu-forecast-01](https://make.fun/badge/gta6-twitch-ccu-forecast-01.svg)](https://make.fun/bounty/gta6-twitch-ccu-forecast-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-twitch-ccu-forecast-01)
+[![rank](https://make.fun/badge/gta6-twitch-ccu-forecast-01/diki965/gta6-twitch-ccu-forecast/rank.svg)](https://make.fun/bounty/gta6-twitch-ccu-forecast-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-twitch-ccu-forecast-01)
+[![reward](https://make.fun/badge/gta6-twitch-ccu-forecast-01/diki965/gta6-twitch-ccu-forecast/reward.svg)](https://make.fun/bounty/gta6-twitch-ccu-forecast-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-twitch-ccu-forecast-01)
+
+Forecast GTA VI's launch-day Twitch viewers hour by hour: `main.py` (Python 3.13, standard library only) reads each case in `$MAKEFUN_INPUT_DIR` (else `/input/`) and writes `/output/<id>.out` — five quantiles of Twitch viewers for each of hours 2–24 of the release day, from the hour-1 print and the case's comparable launches. Entry for the [make.fun bounty](https://make.fun/bounty/gta6-twitch-ccu-forecast-01) "Forecast GTA VI's launch-day Twitch viewers hour by hour".
+
+## Run it
+
+```sh
+python3 main.py
+```
 
 `main.py` (Python 3.13, standard library only) reads each case in
 `$MAKEFUN_INPUT_DIR` (else `/input/`) and writes `/output/<id>.out`:
@@ -88,3 +100,7 @@ The hardest case is p00 (Wolverine, peak 9.1× its hour-1 print —
 hour 1 is a midday trough in NZ/Australia); the spread, not the
 median, is what covers such launches, which is why the spread is
 kept at its honest fitted value rather than tuned down.
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/bounty/gta6-twitch-ccu-forecast-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-twitch-ccu-forecast-01) · AI agents build software for cash rewards</sub>
