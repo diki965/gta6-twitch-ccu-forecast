@@ -30,13 +30,31 @@ used as a normal log-spread.  That gives honest quantiles (about 0.89
 coverage at 90% on the practice cases) rather than the baseline's
 fixed 0.15*sqrt(h-1) widening.
 
-Safety: the fitted log-ratio is floored at the lowest ratio that hour
-ever showed in the pool, and log hour-1 size is clamped to the pool's
-range, so an hour-1 print far outside past launches (GTA VI may be
-one) cannot extrapolate the curve to nonsense.  Anything unexpected
-anywhere falls back to the house persistence forecast, and every
-output row is clamped and re-checked before it is written, so the
-program can never emit an invalid forecast file.
+v2 change (this version): the log hour-1 size is clamped to the
+pool's range EXTENDED by half the pool's log-range on each side,
+instead of to the pool's range itself, and the fitted log-ratio is
+no longer floored at the lowest ratio that hour ever showed.  The
+final case is GTA VI, whose hour-1 print will almost certainly sit
+far above the largest comparable (387k): with v1's hard clamp the
+forecast would freeze at the biggest launch's fitted position, which
+over-forecasts the peak — at a synthetic hour-1 print of 1,000,000
+v1 puts the hour-20 median at 1.46x hour 1, while the pool's two
+biggest launches actually peaked at 1.16x and 1.34x.  The evidence:
+on a leave-out-the-3-largest-launches test (train max 139k, test
+152k / 365k / 387k), the extension cuts the loss from 0.2890 to
+0.2555 (-11.6%, median miss 65.4% -> 51.9%), while in-range it
+costs nothing — the practice cases score identically (0.1818) and
+leave-one-out is 0.2453 vs 0.2460.  The extension caps the fitted
+position at pool-max + ~2.05 log units (~3.0M viewers), so any
+plausible GTA VI print gets the full fitted slope while absurd
+prints stay bounded.  The ratio floor was dropped because it is
+inert in-range and costs 0.0012 under extrapolation (it would bind
+exactly where the extension is meant to act).
+
+Safety: anything unexpected anywhere falls back to the house
+persistence forecast, and every output row is clamped and re-checked
+before it is written, so the program can never emit an invalid
+forecast file.
 """
 
 import json
@@ -64,8 +82,15 @@ FALLBACK_SIGMA = 0.15
 # better on the practice cases (0.179 vs 0.182) and on leave-one-out
 # tests, but the gap is inside noise and 1.0 keeps the 90% coverage
 # closest to 0.9 (0.891 on practice), which is what the final's single
-# case needs if GTA VI behaves like an outlier launch.
+# case needs if GTA VI behaves like an outlier launch.  Narrower
+# spreads also scored worse on the leave-out-largest extrapolation
+# test, which is the regime the final lives in, so 1.0 stays.
 SPREAD_SCALE = 1.0
+
+# How far beyond the pool's log hour-1 range the fitted position may
+# go, as a fraction of that range: 0.5 on each side.  See the v2 note
+# in the module docstring for the evidence.
+EXTEND_FRACTION = 0.5
 
 
 def _parse_time(text):
@@ -181,11 +206,10 @@ def _fit_hour(curves, hour, log_p1):
     if denom > 0:
         slope = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys)) / denom
     intercept = mean_y - slope * mean_x
-    clamped = min(max(log_p1, min(xs)), max(xs))
+    lo_x, hi_x = min(xs), max(xs)
+    ext = EXTEND_FRACTION * (hi_x - lo_x)
+    clamped = min(max(log_p1, lo_x - ext), hi_x + ext)
     median = intercept + slope * clamped
-    floor = min(ys)
-    if median < floor:
-        median = floor
     if n > 2:
         resid_sq = sum((y - (intercept + slope * x)) ** 2 for x, y in zip(xs, ys))
         sd = math.sqrt(resid_sq / (n - 2))
